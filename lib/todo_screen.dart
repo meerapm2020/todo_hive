@@ -17,24 +17,28 @@ class _TodoScreenState extends State<TodoScreen> {
   @override
   void initState() {
     super.initState();
-    box = Hive.box('mybox'); // Open the box during initialization
+    openBox(); // Ensuring box is opened asynchronously
+  }
+
+  openBox() async {
+    box = await Hive.openBox('mybox'); // Open the box if not already open
     loadTodoItems();
   }
 
   loadTodoItems() async {
-    // Load saved tasks from the box
     List<String>? tasks = box.get('todoItems')?.cast<String>();
+    print('Tasks loaded: $tasks'); // Debugging line
 
     if (tasks != null) {
       setState(() {
-        todoItems = tasks; // Assign loaded tasks to todoItems
+        todoItems = tasks;
       });
     }
   }
 
   saveTodoItems() async {
-    // Save updated todoItems list to Hive
-    box.put('todoItems', todoItems);
+    await box.put(
+        'todoItems', todoItems); // Ensure the data is saved asynchronously
   }
 
   void _addTodoItem(String task) {
@@ -43,7 +47,7 @@ class _TodoScreenState extends State<TodoScreen> {
         todoItems.add(task);
       });
       saveTodoItems();
-      todocontroller.clear(); // Clear the input after adding
+      todocontroller.clear();
     }
   }
 
@@ -58,7 +62,7 @@ class _TodoScreenState extends State<TodoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Todo with Hive"),
+        title: const Text("Todo with Hive"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(15.0),
@@ -67,35 +71,42 @@ class _TodoScreenState extends State<TodoScreen> {
             Row(
               children: [
                 SizedBox(
-                    height: 50,
-                    width: 300,
-                    child: TextField(
-                      controller: todocontroller,
-                      decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20))),
-                    )),
-                SizedBox(width: 5),
+                  height: 50,
+                  width: 300,
+                  child: TextField(
+                    controller: todocontroller,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 5),
                 IconButton(
-                    onPressed: () {
-                      _addTodoItem(todocontroller.text);
-                    },
-                    icon: Icon(Icons.add)),
+                  onPressed: () {
+                    _addTodoItem(todocontroller.text);
+                  },
+                  icon: const Icon(Icons.add),
+                ),
               ],
             ),
             Expanded(
-                child: ListView.builder(
-                    itemCount: todoItems.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        title: Text(todoItems[index]),
-                        trailing: GestureDetector(
-                            onTap: () {
-                              _removeTodoItem(index);
-                            },
-                            child: Icon(Icons.delete)),
-                      );
-                    }))
+              child: ListView.builder(
+                itemCount: todoItems.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(todoItems[index]),
+                    trailing: GestureDetector(
+                      onTap: () {
+                        _removeTodoItem(index);
+                      },
+                      child: const Icon(Icons.delete),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
